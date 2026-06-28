@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sprite Sheet Maker · Color Inu Games</title>
+<meta name="theme-color" content="#0e1117">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Sprite Sheet Maker">
+<meta name="description" content="Make sprite sheets from video / GIF / image sequences — adjustable FPS, resolution, per-frame position and live preview.">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div id="frame">
+<header>
+  <img id="brandLogo" src="assets/logo.png" alt="Color Inu Games" onerror="this.style.display='none'">
+  <h1>SPRITE SHEET MAKER</h1>
+  <div class="spacer"></div>
+  <select id="langSel" class="lang-select" aria-label="Language" title="Language">
+    <option value="en">English</option>
+    <option value="zh-CN">简体中文</option>
+    <option value="zh-TW">繁體中文</option>
+    <option value="ja">日本語</option>
+  </select>
+  <button class="btn" id="resetBtn" data-i18n="reset">Reset</button>
+</header>
+
+<div class="app">
+  <!-- ============ LEFT: 输入 & 参数 ============ -->
+  <div class="col left">
+    <div class="card">
+      <h2 data-i18n="src_h">1 · Source</h2>
+      <div class="seg" id="srcSeg">
+        <button data-src="video" class="active" data-i18n="src_video">Video</button>
+        <button data-src="gif" data-i18n="src_gif">GIF</button>
+        <button data-src="images" data-i18n="src_images">Images</button>
+      </div>
+      <div class="drop" id="drop" style="margin-top:12px">
+        <strong id="dropTitle">Click or drop a video file</strong>
+        <span id="dropSub">mp4 / webm / mov supported</span>
+      </div>
+      <input type="file" id="fileInput" accept="video/*" hidden>
+      <div class="hint" id="srcInfo"></div>
+    </div>
+
+    <div class="card">
+      <h2 data-i18n="frames_h">2 · Frames &amp; resolution</h2>
+      <div class="field" id="fpsField">
+        <label data-i18n="fps_label">Frame rate FPS (frames per second)</label>
+        <div class="row">
+          <input type="number" id="fps" value="12" min="1" max="60" step="1">
+          <input type="range" id="fpsRange" value="12" min="1" max="60" step="1" style="flex:2">
+        </div>
+      </div>
+      <div class="field row" id="rangeField">
+        <div style="flex:1"><label data-i18n="start_s">Start (s)</label><input type="number" id="startT" value="0" min="0" step="0.1"></div>
+        <div style="flex:1"><label data-i18n="end_s">End (s, blank = end)</label><input type="number" id="endT" placeholder="—" min="0" step="0.1"></div>
+      </div>
+      <div class="field">
+        <label data-i18n="max_frames">Max frames</label>
+        <input type="number" id="maxFrames" value="120" min="1" max="2000" step="1">
+      </div>
+      <hr style="border:0;border-top:1px solid var(--border);margin:12px 0">
+      <div class="field row">
+        <div style="flex:1"><label data-i18n="fw">Frame width px</label><input type="number" id="fw" value="128" min="1" max="2048"></div>
+        <div style="flex:1"><label data-i18n="fh">Frame height px</label><input type="number" id="fh" value="128" min="1" max="2048"></div>
+      </div>
+      <div class="field">
+        <label data-i18n="fit_label">Fit mode</label>
+        <select id="fit">
+          <option value="contain" data-i18n="fit_contain">contain (fit, letterbox)</option>
+          <option value="cover" data-i18n="fit_cover">cover (fill, crop)</option>
+          <option value="stretch" data-i18n="fit_stretch">stretch (distort)</option>
+        </select>
+      </div>
+      <button class="btn primary full" id="extractBtn" style="margin-top:4px" disabled>⚙ Extract frames</button>
+      <div class="progress" id="progWrap" style="margin-top:10px; display:none"><div id="progBar"></div></div>
+    </div>
+
+    <div class="card">
+      <h2 data-i18n="layout_h">3 · Layout</h2>
+      <div class="field">
+        <label class="switch"><input type="checkbox" id="autoCols" checked><span class="track"></span> <span data-i18n="auto_cols">Auto columns (near square)</span></label>
+      </div>
+      <div class="field">
+        <label data-i18n="columns">Columns</label>
+        <input type="number" id="cols" value="6" min="1" max="64" disabled>
+      </div>
+      <div class="field">
+        <label data-i18n="background">Background</label>
+        <div class="seg" id="bgSeg">
+          <button data-bg="transparent" class="active" data-i18n="bg_transparent">Transparent</button>
+          <button data-bg="color" data-i18n="bg_color">Color</button>
+        </div>
+        <input type="color" id="bgColor" value="#000000" style="margin-top:8px; display:none">
+      </div>
+    </div>
+
+    <div class="card">
+      <h2 data-i18n="key_h">4 · Remove background (alpha)</h2>
+      <label class="switch"><input type="checkbox" id="keyOn"><span class="track"></span> <span data-i18n="key_enable">Enable background removal</span></label>
+      <div id="keyBody" style="display:none; margin-top:12px">
+        <div class="field">
+          <label data-i18n="key_color">Background / key color</label>
+          <div class="row">
+            <input type="color" id="keyColor" value="#00ff00" style="flex:1.2">
+            <button class="btn sm" id="keyPick" data-i18n="key_pick">🎯 Pick</button>
+            <button class="btn sm" id="keyAuto" data-i18n="key_auto">Corners</button>
+          </div>
+        </div>
+        <div class="field">
+          <label><span data-i18n="key_tol">Tolerance:</span> <b id="keyTolVal">18%</b></label>
+          <input type="range" id="keyTol" min="0" max="100" value="18">
+        </div>
+        <div class="field">
+          <label><span data-i18n="key_soft">Softness:</span> <b id="keySoftVal">10%</b></label>
+          <input type="range" id="keySoft" min="0" max="60" value="10">
+        </div>
+        <label class="switch"><input type="checkbox" id="keyDespill"><span class="track"></span> <span data-i18n="key_despill">Despill (green/blue edge spill)</span></label>
+        <div class="hint" data-i18n-html="key_hint">Click “🎯 Pick”, then click the background on the canvas, then adjust tolerance.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ CENTER: 精灵图 ============ -->
+  <div class="col center">
+    <div class="stage-wrap" id="stageWrap">
+      <div class="nostage" id="noStage">
+        <h3 data-i18n="nostage_h">No frames yet</h3>
+        <p data-i18n="nostage_p1">① Pick a source and load it　② Set FPS / resolution　③ Click “Extract frames”</p>
+        <p style="font-size:12px" data-i18n-html="nostage_p2">After that: click a cell to select a frame, then drag or use the numbers on the right to nudge it.</p>
+      </div>
+      <canvas id="sheet" class="checker" style="display:none"></canvas>
+    </div>
+    <div class="stage-bar" id="stageBar" style="display:none">
+      <span class="badge"><span data-i18n="badge_frames">Frames</span> <b id="bFrames">0</b></span>
+      <span class="badge"><span data-i18n="badge_grid">Grid</span> <b id="bGrid">—</b></span>
+      <span class="badge"><span data-i18n="badge_size">Sheet size</span> <b id="bSize">—</b></span>
+      <span class="badge" id="bSel" style="display:none"></span>
+    </div>
+  </div>
+
+  <!-- ============ RIGHT: 预览 & 逐帧 ============ -->
+  <div class="col right">
+    <div class="card">
+      <h2 data-i18n="preview_h">Preview</h2>
+      <div class="preview-box">
+        <canvas id="preview" style="display:none"></canvas>
+        <div class="empty" id="previewEmpty" data-i18n="preview_empty">Play the animation here after frames are made</div>
+      </div>
+      <div class="play-row">
+        <button class="btn primary" id="playBtn" style="flex:1" disabled>▶ Play</button>
+        <button class="btn" id="stepBtn" disabled data-i18n-title="step_title">⏭</button>
+      </div>
+      <div class="field" style="margin-top:12px">
+        <label><span data-i18n="preview_fps">Preview FPS:</span> <b id="pvFpsVal">12</b></label>
+        <input type="range" id="pvFps" value="12" min="1" max="60" step="1">
+      </div>
+      <label class="switch"><input type="checkbox" id="loopChk" checked><span class="track"></span> <span data-i18n="loop">Loop</span></label>
+    </div>
+
+    <div class="card" id="inspector">
+      <h2 data-i18n="insp_h">Per-frame adjust</h2>
+      <div class="empty" id="inspEmpty" data-i18n="insp_empty">Click any frame on the canvas to select and adjust it</div>
+      <div id="inspBody" style="display:none">
+        <div class="frame-meta">
+          <div class="kv"><span data-i18n="f_index">Index</span> <b id="iIdx">—</b></div>
+          <div class="kv"><span data-i18n="f_src">Source size</span> <b id="iSrc">—</b></div>
+        </div>
+        <div class="field row" style="margin-top:12px">
+          <div style="flex:1"><label data-i18n="f_ox">X offset</label><input type="number" id="ox" value="0" step="1"></div>
+          <div style="flex:1"><label data-i18n="f_oy">Y offset</label><input type="number" id="oy" value="0" step="1"></div>
+        </div>
+        <div class="field">
+          <label><span data-i18n="f_scale">Scale:</span> <b id="scaleVal">100%</b></label>
+          <input type="range" id="scale" value="100" min="10" max="300" step="1">
+        </div>
+        <div class="row" style="margin-top:4px">
+          <button class="btn sm" id="centerBtn" data-i18n="btn_center">Center</button>
+          <button class="btn sm" id="resetFrameBtn" data-i18n="btn_resetframe">Reset</button>
+          <button class="btn sm" id="applyAllBtn" data-i18n="btn_applyall" data-i18n-title="applyall_title">Apply to all</button>
+        </div>
+        <div class="row" style="margin-top:8px">
+          <button class="btn sm" id="copyFrameBtn" data-i18n="btn_copy">📋 Copy</button>
+          <button class="btn sm" id="pasteFrameBtn" data-i18n="btn_paste">Paste</button>
+          <button class="btn sm" id="dupFrameBtn" data-i18n="btn_dup">⧉ Duplicate</button>
+        </div>
+        <div class="row" style="margin-top:8px">
+          <button class="btn sm" id="moveLeftBtn" data-i18n="btn_back">◀ Back</button>
+          <button class="btn sm" id="moveRightBtn" data-i18n="btn_fwd">Forward ▶</button>
+          <button class="btn sm" id="delFrameBtn" style="color:var(--danger)" data-i18n="btn_del">Delete</button>
+        </div>
+        <div class="hint" data-i18n-html="insp_hint">Multi-select with Shift / Ctrl click.</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2 data-i18n="export_h">Export</h2>
+      <button class="btn primary full" id="exportPngBtn" disabled data-i18n="export_png">⬇ Export sprite sheet PNG</button>
+      <button class="btn full" id="exportJsonBtn" disabled style="margin-top:8px" data-i18n="export_json">Export JSON</button>
+      <div style="border-top:1px solid var(--border); margin:12px 0 10px"></div>
+      <button class="btn full" id="exportGodot" disabled>Godot · SpriteFrames (.tres)</button>
+      <button class="btn full" id="exportUnity" disabled style="margin-top:8px" data-i18n="export_unity">Unity · auto-slice (.png.meta)</button>
+      <div class="hint" id="engineHint" data-i18n="engine_idle">Available after frames are made.</div>
+    </div>
+  </div>
+</div>
+
+<footer id="siteFooter">
+  <span>Copyright © 2026 Colorinu Games Limited. All rights reserved.</span>
+  <span>Interested in collaboration? Reach out to <a href="mailto:kunito.world@icloud.com">kunito.world@icloud.com</a> for more information</span>
+</footer>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- hidden video element for frame extraction -->
+<video id="video" hidden muted playsinline crossorigin="anonymous"></video>
+
+<script src="i18n.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
