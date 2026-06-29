@@ -1,64 +1,76 @@
-# 精灵图制作器 · Sprite Sheet Maker
+<div align="center">
 
-一个零依赖的网页应用（PWA），从**视频 / GIF / 图片序列**生成精灵图：可调抽帧率 FPS、每帧分辨率、逐帧位置，并内置动画预览。导出精灵图 PNG + JSON 元数据。
+<img src="assets/logo.png" alt="Sprite Sheet Maker · Color Inu Games" width="340">
 
-## 功能
-- **抽帧率 FPS**：从视频/GIF 按指定 fps 抽帧，可设起止秒与最大帧数上限
-- **分辨率**：设定每帧宽×高，自动算出整张精灵图尺寸；contain / cover / stretch 三种缩放
-- **逐帧位置调整**：点击画布选中某帧，拖拽或填 X/Y 偏移、帧内缩放；方向键微调 1px；居中 / 复位 / 套用全部 / 前移后移 / 删除
-- **执行预览**：播放 / 暂停 / 单步、可调播放 FPS、循环，实时反映逐帧调整
-- **导出**：精灵图 PNG + JSON（每帧坐标，TexturePacker 风格）
-- **PWA**：可安装到程序坞 / 桌面、独立窗口、离线可用
+# Sprite Sheet Maker
 
-## 文件结构
-```
-index.html            页面骨架
-styles.css            样式
-app.js                全部逻辑（原生 JS，无框架/无构建）
-manifest.webmanifest  PWA 清单
-sw.js                 Service Worker（离线缓存）
-icons/                应用图标 192 / 512 / maskable
-```
+**English** · [简体中文](README.zh-CN.md) · [繁體中文](README.zh-TW.md) · [日本語](README.ja.md)
 
-## 本地运行
-直接双击 `index.html` 即可使用（file:// 模式下除「安装/离线」外功能完整）。
+Turn a **video, GIF, or image sequence** into a game-ready **sprite sheet** — right in your browser. Zero dependencies, no build, installable as an app.
 
-要启用 PWA 安装与离线，需用本地服务器：
+[![▶ Live Demo](https://img.shields.io/badge/▶_Live_Demo-FF0099?style=for-the-badge)](https://kunito01.github.io/sprite-sheet-maker/)
+
+[![Stars](https://img.shields.io/github/stars/kunito01/sprite-sheet-maker?style=flat-square)](https://github.com/kunito01/sprite-sheet-maker/stargazers)
+[![Forks](https://img.shields.io/github/forks/kunito01/sprite-sheet-maker?style=flat-square)](https://github.com/kunito01/sprite-sheet-maker/network/members)
+[![Issues](https://img.shields.io/github/issues/kunito01/sprite-sheet-maker?style=flat-square)](https://github.com/kunito01/sprite-sheet-maker/issues)
+[![License](https://img.shields.io/github/license/kunito01/sprite-sheet-maker?style=flat-square)](LICENSE)
+[![Last commit](https://img.shields.io/github/last-commit/kunito01/sprite-sheet-maker?style=flat-square)](https://github.com/kunito01/sprite-sheet-maker/commits)
+
+![Vanilla JS](https://img.shields.io/badge/Vanilla%20JS-F7DF1E?logo=javascript&logoColor=000&style=flat-square)
+![PWA](https://img.shields.io/badge/PWA-5A0FC8?logo=pwa&logoColor=fff&style=flat-square)
+![Godot](https://img.shields.io/badge/Godot-478CBF?logo=godotengine&logoColor=fff&style=flat-square)
+![Unity](https://img.shields.io/badge/Unity-000?logo=unity&logoColor=fff&style=flat-square)
+
+</div>
+
+## ✨ Features
+
+- **Any source** — extract frames from a **video** or **GIF** at a chosen FPS, or import an **image sequence** (one image per frame).
+- **Your resolution** — set per-frame width/height; the full sheet size is computed for you. `contain` / `cover` / `stretch` fit modes.
+- **Per-frame editing** — click to select, **drag** or type X/Y to nudge, scale per frame. **Multi-select** with `Shift` / `Ctrl`-click, plus **copy / paste / duplicate** to fill gaps and build clean loops.
+- **Background removal (alpha key)** — eyedropper or corner auto-sample, tolerance + edge softness + despill. Export PNGs with a real alpha channel.
+- **Live preview** — play the animation, adjustable preview FPS, loop.
+- **Exports** — sprite sheet **PNG**, **JSON** (TexturePacker hash), **Godot** `.tres`, and **Unity** `.png.meta` (grid auto-slice).
+- **PWA** — install to your dock / home screen, works offline.
+- **Multilingual UI** — English · 简体中文 · 繁體中文 · 日本語.
+
+## 🚀 Use it
+
+1. Open the **[live demo](https://kunito01.github.io/sprite-sheet-maker/)** (Chrome / Edge recommended).
+2. Drop a video / GIF / images, set **FPS** and **frame size**, click **Extract frames**.
+3. Tidy up: select frames, drag to align, remove the background, preview the loop.
+4. **Export** the PNG (+ JSON / Godot / Unity).
+
+## 🎮 Godot & Unity
+
+Export the PNG first, then the engine file:
+
+- **Godot 4** — export `Godot · SpriteFrames (.tres)`, drop it next to `spritesheet.png`, assign the `.tres` to an `AnimatedSprite2D`. Animation `default`, speed = your FPS, looping on.
+- **Unity** — export `Unity · auto-slice (.png.meta)`, put it beside `spritesheet.png` in `Assets/`; Unity slices the grid automatically (rects flipped to Unity's bottom-left origin, centered pivot).
+- **Other engines** — the generic **JSON** (TexturePacker hash, `x,y,w,h` per frame) works with Phaser / PixiJS / Cocos, etc.
+
+## 🌐 Browser support
+
+- Video extraction & image sequences: all modern browsers.
+- GIF frame decode: needs WebCodecs `ImageDecoder` (Chrome / Edge); Safari falls back to the **Images** mode.
+
+## 🛠 Run locally
+
+Just open `index.html`. For PWA install / offline, serve it over HTTP:
+
 ```bash
-cd "Sprite App"
 python3 -m http.server 8765
-# 浏览器打开 http://localhost:8765 ，用 Chrome/Edge 点地址栏安装图标或页面右上「⬇ 安装应用」
+# then open http://localhost:8765 in Chrome / Edge
 ```
 
-## 部署到 GitHub Pages（可选）
-在本目录执行（账号需已登录 `gh`）：
-```bash
-git init && git add -A && git commit -m "Sprite Sheet Maker"
-gh repo create sprite-sheet-maker --public --source=. --push
-gh api -X POST repos/<user>/sprite-sheet-maker/pages -f source.branch=main -f source.path=/
-# 几分钟后访问 https://<user>.github.io/sprite-sheet-maker/
-```
+## 📄 License
 
-## 在 Godot / Unity 中使用
+[Apache-2.0](LICENSE) © 2026 Colorinu Games Limited.
 
-先点「导出精灵图 PNG」拿到 `spritesheet.png`，再按引擎导出对应文件。
+---
 
-### Godot 4
-1. 点「Godot · SpriteFrames (.tres)」，得到 `spritesheet.tres`
-2. 把 `spritesheet.tres` 和 `spritesheet.png` 一起拖进项目（同目录，PNG 名字保持 `spritesheet.png`）
-3. 新建 `AnimatedSprite2D` 节点 → Inspector 的 `Sprite Frames` 选这个 `.tres` → 播放
-   - 动画名为 `default`，播放速度 = 你的抽帧率，循环已开
+<div align="center">
 
-### Unity
-1. 点「Unity · 自动切片 (.png.meta)」，得到 `spritesheet.png.meta`
-2. 把 `spritesheet.png` 与 `spritesheet.png.meta` 一起放进 `Assets/`（同目录、同名），Unity 会自动按网格切好所有帧
-3. 展开该 PNG 即可看到 `spritesheet_0 … spritesheet_N`，拖进场景或做 Animation
-   - 坐标已按 Unity 左下原点翻转；pivot 为居中
-   - 若某些 Unity 版本未自动切：选中 PNG → Sprite Mode = Multiple → Sprite Editor → Slice → Grid By Cell Count，按界面提示的「网格 列×行」填入即可
+Made with 🩷 by **Color Inu Games** — collaboration? <a href="mailto:kunito.world@icloud.com">kunito.world@icloud.com</a>
 
-### 通用 JSON
-TexturePacker（JSON Hash）格式，供 Phaser / PixiJS / Cocos 等使用，含每帧 `x,y,w,h`。
-
-## 浏览器支持
-- 视频抽帧、图片序列：所有现代浏览器
-- GIF 逐帧解码：依赖 WebCodecs `ImageDecoder`，Chrome / Edge 最佳；Safari 不支持时会提示改用「图片序列」
+</div>
